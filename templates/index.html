@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>CertiCheck</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 text-gray-900 px-4 sm:px-8 py-6">
+  <div class="w-full max-w-xl mx-auto bg-white p-4 sm:p-6 rounded-xl shadow-md">
+    <h1 class="text-2xl font-bold mb-4">Job Scam Verifier</h1>
+
+    <textarea
+      id="jobText"
+      rows="6"
+      class="w-full border p-2 sm:p-3 rounded mb-4 text-sm sm:text-base"
+      placeholder="Paste job description here..."
+    ></textarea>
+    <button
+      id="verifyButton"
+      onclick="verifyJob()"
+      class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+    >
+      Verify
+    </button>
+
+    <div id="result" class="mt-6 hidden border-t pt-4 text-sm sm:text-base break-words">
+    <p id="score" class="font-bold"></p>
+      <p id="recommendation" class="text-red-600 font-semibold"></p>
+      <p id="flags" class="mt-2"></p>
+      <p id="explanation" class="mt-2 text-sm text-gray-700"></p>
+    </div>
+
+    <div
+      id="error"
+      class="mt-4 text-red-500 font-semibold hidden"
+    >
+      Something went wrong. Please try again.
+    </div>
+    <div id="loadingSpinner" class="mt-4 text-blue-600 font-medium hidden">
+  ⏳ Analyzing...
+</div>
+
+<button
+  id="newCheckBtn"
+  onclick="resetForm()"
+  class="mt-4 hidden text-blue-600 underline"
+>
+  New Check
+</button>
+
+  </div>
+
+<script>
+  async function verifyJob() {
+    const text = document.getElementById("jobText").value.trim();
+    const resultDiv = document.getElementById("result");
+    const errorDiv = document.getElementById("error");
+    const button = document.getElementById("verifyButton");
+    const spinner = document.getElementById("loadingSpinner");
+    const newCheckBtn = document.getElementById("newCheckBtn");
+    const recommendation = document.getElementById("recommendation");
+
+    // Reset states
+    resultDiv.classList.add("hidden");
+    errorDiv.classList.add("hidden");
+    recommendation.className = "font-semibold";
+    spinner.classList.remove("hidden");
+    newCheckBtn.classList.add("hidden");
+    button.disabled = true;
+    button.innerText = "Verifying...";
+
+    try {
+      const response = await fetch("/check-job", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text }),
+      });
+
+      const data = await response.json();
+      console.log("📦 Raw backend response:", data);
+
+      if (response.ok && data.scam_score !== undefined) {
+        // Color logic
+        const cleanRec = data.recommendation.trim().toLowerCase();
+
+        let colorClass = "text-green-600";
+        if (cleanRec.includes("do not trust")) {
+          colorClass = "text-red-600";
+        } else if (cleanRec.includes("caution")) {
+          colorClass = "text-yellow-600";
+        }
+
+        recommendation.innerText = data.recommendation;
+        recommendation.className = `font-semibold ${colorClass}`;
+        document.getElementById("score").innerText = `Scam Score: ${data.scam_score}`;
+        document.getElementById("flags").innerText = `Red Flags: ${data.red_flags.join(" | ")}`;
+        document.getElementById("explanation").innerText = data.explanation;
+
+        resultDiv.classList.remove("hidden");
+        newCheckBtn.classList.remove("hidden");
+      } else {
+        throw new Error("Something went wrong on the backend");
+      }
+    } catch (err) {
+      console.error("❌ Error:", err);
+      errorDiv.classList.remove("hidden");
+    } finally {
+      spinner.classList.add("hidden");
+      button.disabled = false;
+      button.innerText = "Verify";
+    }
+  }
+
+  function resetForm() {
+    document.getElementById("jobText").value = "";
+    document.getElementById("result").classList.add("hidden");
+    document.getElementById("error").classList.add("hidden");
+    document.getElementById("newCheckBtn").classList.add("hidden");
+    document.getElementById("recommendation").className = "text-red-600 font-semibold";
+    document.getElementById("score").innerText = "";
+    document.getElementById("flags").innerText = "";
+    document.getElementById("explanation").innerText = "";
+  }
+</script>
+</body>
+</html>

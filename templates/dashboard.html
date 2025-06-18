@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>CertiCheck Logs</title>
+  <style>
+    body { font-family: sans-serif; padding: 20px; }
+    table { border-collapse: collapse; width: 100%; font-size: 14px; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: left; vertical-align: top; }
+    th { background-color: #f2f2f2; }
+    .safe { background-color: #e6ffed; }
+    .caution { background-color: #fff5cc; }
+    .danger { background-color: #ffe6e6; }
+  </style>
+</head>
+<body>
+  <h2>CertiCheck Scam Verifications Log</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Time</th>
+        <th>Scam Score</th>
+        <th>Recommendation</th>
+        <th>Explanation</th>
+        <th>Red Flags</th>
+        <th>Input Text</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in records %}
+        <tr class="{% if row.recommendation == 'Do not trust this offer' %}danger{% elif row.recommendation == 'Proceed with caution' %}caution{% else %}safe{% endif %}">
+          <td>{{ row.checked_at or row.created_at }}</td>
+          <td>{{ row.scam_score }}</td>
+          <td><strong>{{ row.recommendation }}</strong></td>
+          <td>{{ row.explanation }}</td>
+          <td>
+            <ul>
+              {% for flag in row.red_flags %}
+                <li>{{ flag }}</li>
+              {% endfor %}
+            </ul>
+          </td>
+          <td>{{ row.text_submitted or row.input_text }}</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</body>
+</html>
