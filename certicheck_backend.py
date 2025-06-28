@@ -11,6 +11,7 @@ from flask import request, Response
 from dotenv import load_dotenv
 load_dotenv()
 
+# trigger redeploy
 
 # Basic Auth Config
 USERNAME = "admin"
@@ -171,4 +172,4 @@ def dashboard():
     return render_template("dashboard.html", records=records)
 
 if __name__ == '__main__':
-    app.run(debug=True)
+app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
